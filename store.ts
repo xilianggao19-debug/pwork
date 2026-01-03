@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { WorkspaceData, Todo, Meeting, Decision, SyncStatus, User } from './types';
+import { WorkspaceData, Todo, Meeting, Decision, SyncStatus, User, Memo } from './types';
 
 interface WorkspaceStore extends WorkspaceData {
   // Auth State
@@ -33,7 +33,9 @@ interface WorkspaceStore extends WorkspaceData {
   deleteMeeting: (id: string) => void;
   
   // Memos
-  updateMemos: (text: string) => void;
+  addMemo: (text: string) => void;
+  updateMemo: (id: string, text: string) => void;
+  deleteMemo: (id: string) => void;
   
   // Outcomes
   updateOutcome: (index: number, text: string) => void;
@@ -58,7 +60,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       todos: [],
       dailyWork: '',
       meetings: [],
-      memos: '',
+      memos: [],
       outcomes: ['', '', ''],
       decisions: [],
       lastSynced: Date.now(),
@@ -74,7 +76,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       login: (username, password) => {
         const user = get().users.find(u => u.username === username && u.password === password);
         if (user) {
-          set({ currentUser: { ...user } });
+          set({ currentUser: user });
           return true;
         }
         return false;
@@ -85,7 +87,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       register: (userData) => {
         const newUser: User = {
           ...userData,
-          id: Math.random().toString(36).substring(2, 11),
+          id: Math.random().toString(36).substr(2, 9),
         };
         set(state => ({
           users: [...state.users, newUser],
@@ -115,7 +117,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       // Workspace Actions
       addTodo: (text) => {
         set((state) => ({
-          todos: [{ id: Math.random().toString(36).substring(2, 11), text, completed: false, createdAt: Date.now() }, ...state.todos]
+          todos: [{ id: Math.random().toString(36).substr(2, 9), text, completed: false, createdAt: Date.now() }, ...state.todos]
         }));
         triggerSync(set);
       },
@@ -147,7 +149,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       addMeeting: (meeting) => {
         set((state) => ({
-          meetings: [...state.meetings, { ...meeting, id: Math.random().toString(36).substring(2, 11) }]
+          meetings: [...state.meetings, { ...meeting, id: Math.random().toString(36).substr(2, 9) }]
         }));
         triggerSync(set);
       },
@@ -159,8 +161,25 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         triggerSync(set);
       },
 
-      updateMemos: (memos) => {
-        set({ memos });
+      addMemo: (text) => {
+        set((state) => ({
+          memos: [{ id: Math.random().toString(36).substring(2, 11), text, createdAt: Date.now() }, ...state.memos]
+        }));
+        triggerSync(set);
+      },
+
+      updateMemo: (id, text) => {
+        set((state) => ({
+          memos: state.memos.map(m => m.id === id ? { ...m, text } : m)
+        }));
+        triggerSync(set);
+      },
+
+      deleteMemo: (id) => {
+        set((state) => ({
+          memos: state.memos.filter(m => m.id !== id)
+        }));
+        triggerSync(set);
       },
 
       updateOutcome: (index, text) => {
@@ -174,7 +193,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       addDecision: (text) => {
         set((state) => ({
-          decisions: [...state.decisions, { id: Math.random().toString(36).substring(2, 11), text, important: false }]
+          decisions: [...state.decisions, { id: Math.random().toString(36).substr(2, 9), text, important: false }]
         }));
         triggerSync(set);
       },

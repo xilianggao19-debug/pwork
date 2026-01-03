@@ -19,6 +19,12 @@ export interface Decision {
   important: boolean;
 }
 
+export interface Memo {
+  id: string;
+  text: string;
+  createdAt: number;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -32,7 +38,7 @@ export interface WorkspaceData {
   todos: Todo[];
   dailyWork: string;
   meetings: Meeting[];
-  memos: string;
+  memos: Memo[];
   outcomes: string[];
   decisions: Decision[];
   lastSynced: number;
